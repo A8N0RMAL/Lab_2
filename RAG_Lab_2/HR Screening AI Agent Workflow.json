@@ -1,0 +1,245 @@
+{
+  "name": "HR Screening AI Agent Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "hr-screening-1",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        48
+      ],
+      "id": "3868dd7b-8381-48b0-9fa6-94772b13676b",
+      "name": "Webhook",
+      "webhookId": "50931556-a4ca-47f4-8634-9dce9f7b0447"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "d94f2853-c186-4c93-a05f-bf644f4f8090",
+              "name": "candidateName",
+              "value": "={{ $json.body.candidateName }}",
+              "type": "string"
+            },
+            {
+              "id": "b15b8746-266a-40f6-9d32-068bed55477b",
+              "name": "jobTitle",
+              "value": "={{ $json.body.jobTitle }}",
+              "type": "string"
+            },
+            {
+              "id": "49d5e859-c65d-41c7-8bde-a6727a22af84",
+              "name": "jobDescription",
+              "value": "={{ $json.body.jobDescription }}",
+              "type": "string"
+            },
+            {
+              "id": "3f53145b-f606-449f-8cc1-2cffa8c5d9cd",
+              "name": "cvText",
+              "value": "={{ $json.body.cvText }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        224,
+        48
+      ],
+      "id": "e4d852d1-7d8b-4293-ab80-04e7602cc504",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Screen the candidate {{ $json.candidateName }} for the role of {{ $json.jobTitle }}. Use the provided tool to perform a deep comparative analysis of their CV text against the job description requirements.",
+        "options": {
+          "systemMessage": "You are a professional Executive Recruiter and HR Director. Your only path forward is to utilize the AI Agent Tool to evaluate the candidate and return the completed evaluation report directly to the user."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        480,
+        48
+      ],
+      "id": "9f89e51d-da2a-4714-b5b5-5272095308a8",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        368,
+        256
+      ],
+      "id": "d74eb3bb-50fb-4384-82f7-8c4055c1a1dd",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "CHIinzdgBMDXRCMs",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "text": "=Job Description:\n\n{{ $json.jobDescription }}\n\nCandidate CV:\n\n{{ $json.cvText }}\n\nReturn strict raw JSON:\n\n{\n  \"score\": 85,\n  \"matchingSkills\": [\"React\", \"Node.js\"],\n  \"missingSkills\": [\"AWS Cloud\"],\n  \"summary\": \"The candidate has strong frontend experience but lacks cloud backend deployment knowledge.\",\n  \"recommendation\": \"Hire\" \n}",
+        "options": {
+          "systemMessage": "You are a professional HR Screening Agent. Analyze the Candidate CV text and compare it carefully against the Job Description. Give a score from 0 to 100, identify matching skills, identify missing skills, write a concise professional summary, and provide a single recommendation ('Hire', 'Interview', or 'Reject'). Return ONLY valid JSON matching the requested structure. No markdown formatting."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agentTool",
+      "typeVersion": 3,
+      "position": [
+        688,
+        256
+      ],
+      "id": "fef46c85-1e5f-48f1-8807-85411dc4b7a7",
+      "name": "AI Agent Tool"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        592,
+        416
+      ],
+      "id": "81a5aec6-2898-4db6-ada0-7db3d0fbdac0",
+      "name": "OpenAI Chat Model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "CHIinzdgBMDXRCMs",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        880,
+        48
+      ],
+      "id": "89fa9258-e75b-4091-b991-f3bd39c0ef52",
+      "name": "Respond to Webhook"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent Tool",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "db603924-bed6-4175-b6bb-f8ef2406dea5",
+  "meta": {
+    "instanceId": "5caff23da66fd5a6472ecae0e62404b44052efef24e5225dc92560b86753365f"
+  },
+  "nodeGroups": [],
+  "id": "yu5AatpnNAMzIOvf",
+  "tags": []
+}
